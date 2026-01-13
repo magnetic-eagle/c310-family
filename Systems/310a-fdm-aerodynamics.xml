@@ -1015,6 +1015,7 @@
 			<product>
 				<property>aero/qbar-psf</property>
 				<property>metrics/Sw-sqft</property>
+			  <sum>
 				<table>
 				<independentVar	lookup="row">aero/alpha-deg</independentVar>						
 				<independentVar	lookup="column">fcs/flap-pos-deg</independentVar>						
@@ -1343,6 +1344,19 @@
 24.1060	0.8326	0.9818	1.0473
 				</tableData>	
 				</table>
+							  
+				<!--
+				Wind tunnel data includes gear drag at flaps 15+.
+				Subtracting that out to avoid double-dipping.
+				-->
+				<table>
+				<independentVar>fcs/flap-pos-deg</independentVar>
+				<tableData>
+				0	0
+				15	-0.02
+				</tableData>
+				</table>
+			  </sum>  
 			</product>
 		</function>
 
