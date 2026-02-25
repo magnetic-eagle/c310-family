@@ -1,4 +1,6 @@
-#version 120
+$FG_GLSL_VERSION
+
+/*#version 120
 
 uniform sampler2D gradient_texture;
 uniform int num_blades;
@@ -108,5 +110,130 @@ void main() {
 
 	fragColor.rgb = fog_Func(fragColor.rgb, fogType);
 	gl_FragColor = fragColor;
+}*/
+
+layout(location = 0) out vec4 fragColor;
+
+in VS_OUT {
+    float flogz;
+    vec2 texcoord;
+    vec3 vertex_normal;
+    vec3 view_vector;
+    vec4 ap_color;
+    vec3 vertex;
+} fs_in;
+
+uniform float metallic_factor;
+uniform float roughness_factor;
+
+uniform sampler2D gradient_texture;
+uniform sampler2D normal_tex;
+uniform int num_blades;
+uniform float diameter;
+uniform float rpm;
+uniform float pitch;
+uniform float blade_width_0;
+uniform float blade_width_1;
+uniform float blade_width_2;
+uniform float blade_width_3;
+uniform float blur_onset_rpm;
+uniform float blur_full_rpm;
+
+
+FG_VIEW_GLOBAL
+uniform mat4 fg_ViewMatrixInverse[FG_NUM_VIEWS];
+
+// color.glsl
+vec3 eotf_inverse_sRGB(vec3 srgb);
+// shading_transparent.glsl
+vec3 eval_lights_transparent(vec3 base_color,
+                             float metallic,
+                             float roughness,
+                             float occlusion,
+                             vec3 emissive,
+                             vec3 P, vec3 N, vec3 V,
+                             vec4 ap,
+                             mat4 view_matrix_inverse);
+// normalmap.glsl
+vec3 perturb_normal(vec3 N, vec3 V, vec2 texcoord, sampler2D tex);
+// logarithmic_depth.glsl
+float logdepth_encode(float z);
+
+/*float calc_blur_alpha(float pixel_angle, float angle, float blur_angle, float alpha_factor) {
+	return clamp((abs((pixel_angle - angle - blur_angle) / blur_angle)) * alpha_factor, 0.0, alpha_factor);
+}*/
+
+vec4 calc_color(vec3 vertex) {
+	float rpm = clamp(rpm - blur_onset_rpm, 0.0, blur_full_rpm - blur_onset_rpm);
+	float noblur_angle = clamp(rpm / ((blur_full_rpm - blur_onset_rpm) / (180 / num_blades)), 0.0, 360.0);
+	float blur_angle = noblur_angle * 0.25;
+	float d = length(vertex.yz) / diameter * 2.0;
+	vec4 base = texture2D(gradient_texture, vec2(d, 0));
+	base.a = 0;
+	float pixel_angle = degrees(atan(vertex.z, vertex.y)) + 180;
+	
+	float angle = 0.0;
+	float alpha_factor = 0.6;
+	float blade_width = 0.0;
+	if (d <= 0.25) {
+		alpha_factor = mix(1.0, blade_width_0 * num_blades / (2 * 3.14159265359 * d * (rpm / 60) * 0.06), d * 4);
+	} else {
+		if (d <= 0.5) {
+			blade_width = mix(blade_width_0, blade_width_1, (d - 0.25) * 4);
+		} else if (d <= 0.75) {
+			blade_width = mix(blade_width_1, blade_width_2, (d - 0.5) * 4);
+		} else if (d <= 1.0) {
+			blade_width = mix(blade_width_2, blade_width_3, (d - 0.75) * 4);
+		}
+		alpha_factor = blade_width * num_blades / (2 * 3.14159265359 * d * (rpm / 60) * 0.06);
+	}
+
+	while (angle <= 360.0) {
+		float pixel_angle_delta_blade = abs(pixel_angle - angle);
+		if (pixel_angle_delta_blade <= 180.0 / num_blades) {
+			if (pixel_angle_delta_blade < noblur_angle) {
+				base.a = alpha_factor;
+			} else if (pixel_angle_delta_blade < noblur_angle + blur_angle) {
+				base.a = clamp((abs((pixel_angle_delta_blade - noblur_angle - blur_angle) / blur_angle)) * alpha_factor, 0.0, alpha_factor);
+				//base.a = calc_blur_alpha(pixel_angle_delta_blade, noblur_angle, blur_angle, alpha_factor);
+			}
+		}
+		angle += 360.0 / num_blades;
+	}
+	
+	return base;
+}
+
+void main() {
+	vec4 base_color = calc_color(fs_in.vertex);
+	base_color = vec4(eotf_inverse_sRGB(base_color.rgb), base_color.a);
+	if (base_color.a < 0.01) {
+		discard;
+	}
+
+	float occlusion = 0;
+	float roughness = 1 * roughness_factor;
+	float metallic = 1 * metallic_factor;
+	vec3 emissive = vec3(0, 0, 0);
+
+	vec3 V = normalize(-fs_in.view_vector);
+
+	vec3 N = normalize(fs_in.vertex_normal);
+	N = perturb_normal(N, fs_in.view_vector, fs_in.texcoord, normal_tex);
+
+	vec3 color = eval_lights_transparent(
+		base_color.rgb,
+		metallic,
+		roughness,
+		occlusion,
+		emissive,
+		fs_in.view_vector, N, V,
+		fs_in.ap_color,
+		fg_ViewMatrixInverse[FG_VIEW_ID]
+	);
+
+	fragColor = vec4(color, base_color.a);
+	fragColor = base_color;
+	gl_FragDepth = logdepth_encode(fs_in.flogz);
 }
 

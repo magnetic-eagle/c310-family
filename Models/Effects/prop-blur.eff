@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PropertyList>
-	<name>Effects/prop-blur</name>
+<PropertyList><![CDATA[
 	<inherits-from>Effects/model-transparent</inherits-from>
 
 	<parameters>
@@ -211,6 +210,451 @@
 				<value><use>sun_atlas_size</use></value>
 			</uniform>
 			<!-- End shadows include -->
+		</pass>
+	</technique>]]>
+	<name>Effects/prop-blur</name>
+	<parameters>
+		<blend>1</blend>
+		<cull-face>back</cull-face>
+		<texture n="0">
+			<image>Aircraft/c310-family/Models/Effects/prop-blur-gradient.png</image>
+			<type>2d</type>
+			<filter>linear-mipmap-linear</filter>
+			<wrap-s>repeat</wrap-s>
+			<wrap-t>repeat</wrap-t>
+		</texture>
+		<texture n="1">
+			<type>null-normalmap</type>
+		</texture>
+		<texture n="2">
+			<type>white</type>
+		</texture>
+		<texture n="3">
+			<type>white</type>
+		</texture>
+		<metallic-factor type="float">1.0</metallic-factor>
+		<roughness-factor type="float">1.0</roughness-factor>
+		<show-shadow-cascades>
+			<use>/sim/rendering/hdr/debug/show-shadow-cascades</use>
+		</show-shadow-cascades>
+		<normal-bias>
+			<use>/sim/rendering/hdr/shadows/normal-bias</use>
+		</normal-bias>
+		<sss-enabled>
+			<use>/sim/rendering/hdr/shadows/sss-enabled</use>
+		</sss-enabled>
+		<sss-step-count>
+			<use>/sim/rendering/hdr/shadows/sss-step-count</use>
+		</sss-step-count>
+		<sss-max-distance>
+			<use>/sim/rendering/hdr/shadows/sss-max-distance</use>
+		</sss-max-distance>
+		<sss-depth-bias>
+			<use>/sim/rendering/hdr/shadows/sss-depth-bias</use>
+		</sss-depth-bias>
+		<!-- exposure.glsl -->
+		<exposure-compensation>
+			<use>/sim/rendering/hdr/exposure-compensation</use>
+		</exposure-compensation>
+		
+		<diameter-m>1</diameter-m>
+		<num-blades>2</num-blades>
+		<rpm><use>engines/engine[0]/thruster/rpm</use></rpm>
+		<pitch><use>engines/engine[0]/thruster/pitch</use></pitch>
+		<blade-width n="0">0.07</blade-width>
+		<blade-width n="1">0.12</blade-width>
+		<blade-width n="2">0.16</blade-width>
+		<blade-width n="3">0.14</blade-width>
+		<blur-onset-rpm>100</blur-onset-rpm>
+		<blur-full-rpm>800</blur-full-rpm>
+	</parameters>
+
+	<![CDATA[<technique n="109">
+		<scheme>hdr-geometry</scheme>
+		<pass>
+			<depth>
+				<enabled>true</enabled>
+				<function>less</function>
+				<write-mask>true</write-mask>
+			</depth>
+			<texture-unit>
+				<unit>0</unit>
+				<type><use>texture[0]/type</use></type>
+				<image><use>texture[0]/image</use></image>
+				<filter><use>texture[0]/filter</use></filter>
+				<mag-filter><use>texture[0]/mag-filter</use></mag-filter>
+				<wrap-s><use>texture[0]/wrap-s</use></wrap-s>
+				<wrap-t><use>texture[0]/wrap-t</use></wrap-t>
+			</texture-unit>
+			<texture-unit>
+				<unit>1</unit>
+				<type><use>texture[1]/type</use></type>
+				<image><use>texture[1]/image</use></image>
+				<filter><use>texture[1]/filter</use></filter>
+				<mag-filter><use>texture[1]/mag-filter</use></mag-filter>
+				<wrap-s><use>texture[1]/wrap-s</use></wrap-s>
+				<wrap-t><use>texture[1]/wrap-t</use></wrap-t>
+			</texture-unit>
+			<blend><use>blend</use></blend>
+			<rendering-hint>transparent</rendering-hint>
+			<cull-face>back</cull-face>
+			<program>
+				<fragment-shader>Aircraft/c310-family/Shaders/prop-blur.frag</fragment-shader>
+				<vertex-shader>Aircraft/c310-family/Shaders/prop-blur.vert</vertex-shader>
+				<!--<vertex-shader>Shaders/HDR/model_pbr_transparent.vert</vertex-shader>-->
+				<!--<fragment-shader>Shaders/HDR/model_pbr_transparent.frag</fragment-shader>-->
+				<vertex-shader>Shaders/HDR/logarithmic_depth.glsl</vertex-shader>
+				<vertex-shader>Shaders/HDR/aerial_perspective.glsl</vertex-shader>
+				<vertex-shader>Shaders/HDR/mvr.vert</vertex-shader>
+				<fragment-shader>Shaders/HDR/normalmap.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/color.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/math.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/logarithmic_depth.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/shading_transparent.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/surface.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/ibl.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/shadows.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/sun.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/aerial_perspective.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/atmos_spectral.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/clustered.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/exposure.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/mvr.frag</fragment-shader>
+			</program>
+			<uniform>
+				<name>gradient_texture</name>
+				<type>sampler-2d</type>
+				<value type="int">0</value>
+			</uniform>
+			<uniform>
+				<name>normal_tex</name>
+				<type>sampler-2d</type>
+				<value type="int">1</value>
+			</uniform>
+			<uniform>
+				<name>metallic_factor</name>
+				<type>float</type>
+				<value><use>metallic-factor</use></value>
+			</uniform>
+			<uniform>
+				<name>roughness_factor</name>
+				<type>float</type>
+				<value><use>roughness-factor</use></value>
+			</uniform>
+			<uniform>
+				<name>diameter</name>
+				<type>float</type>
+				<value><use>diameter-m</use></value>
+			</uniform>
+			<uniform>
+				<name>num_blades</name>
+				<type>int</type>
+				<value><use>num-blades</use></value>
+			</uniform>
+			<uniform>
+				<name>rpm</name>
+				<type>float</type>
+				<value><use>rpm</use></value>
+			</uniform>
+			<uniform>
+				<name>pitch</name>
+				<type>float</type>
+				<value><use>pitch</use></value>
+			</uniform>
+			<uniform>
+				<name>blade_width_0</name>
+				<type>float</type>
+				<value><use>blade-width[0]</use></value>
+			</uniform>
+			<uniform>
+				<name>blade_width_1</name>
+				<type>float</type>
+				<value><use>blade-width[1]</use></value>
+			</uniform>
+			<uniform>
+				<name>blade_width_2</name>
+				<type>float</type>
+				<value><use>blade-width[2]</use></value>
+			</uniform>
+			<uniform>
+				<name>blade_width_3</name>
+				<type>float</type>
+				<value><use>blade-width[3]</use></value>
+			</uniform>
+			<uniform>
+				<name>blur_onset_rpm</name>
+				<type>float</type>
+				<value><use>blur-onset-rpm</use></value>
+			</uniform>
+			<uniform>
+				<name>blur_full_rpm</name>
+				<type>float</type>
+				<value><use>blur-full-rpm</use></value>
+			</uniform>
+		</pass>
+	</technique>]]>
+
+	<!--<technique n="119">
+		<scheme>hdr-shadow</scheme>
+		<pass>
+			<color-mask type="vec4d">0 0 0 0</color-mask>
+			<cull-face>back</cull-face>
+			<blend>0</blend>
+			<polygon-offset>
+				<factor>1.1</factor>
+				<units>4.0</units>
+			</polygon-offset>
+			<program>
+				<vertex-shader>Shaders/HDR/model_shadow.vert</vertex-shader>
+				<fragment-shader>Shaders/HDR/model_shadow.frag</fragment-shader>
+			</program>
+		</pass>
+	</technique>-->
+	
+	<!--<technique n="108">
+		<scheme>hdr-geometry</scheme>
+	</technique>
+
+	<technique n="118">
+		<scheme>hdr-shadow</scheme>
+	</technique>-->
+	
+	<technique n="128">
+		<scheme>hdr-forward</scheme>
+		<pass>
+			<depth>
+				<enabled>true</enabled>
+				<function>less</function>
+				<write-mask>false</write-mask>
+			</depth>
+			<texture-unit>
+				<unit>0</unit>
+				<type><use>texture[0]/type</use></type>
+				<image><use>texture[0]/image</use></image>
+				<filter><use>texture[0]/filter</use></filter>
+				<mag-filter><use>texture[0]/mag-filter</use></mag-filter>
+				<wrap-s><use>texture[0]/wrap-s</use></wrap-s>
+				<wrap-t><use>texture[0]/wrap-t</use></wrap-t>
+			</texture-unit>
+			<texture-unit>
+				<unit>1</unit>
+				<type><use>texture[1]/type</use></type>
+				<image><use>texture[1]/image</use></image>
+				<filter><use>texture[1]/filter</use></filter>
+				<mag-filter><use>texture[1]/mag-filter</use></mag-filter>
+				<wrap-s><use>texture[1]/wrap-s</use></wrap-s>
+				<wrap-t><use>texture[1]/wrap-t</use></wrap-t>
+			</texture-unit>
+			<texture-unit>
+				<unit>2</unit>
+				<type><use>texture[2]/type</use></type>
+				<image><use>texture[2]/image</use></image>
+				<filter><use>texture[2]/filter</use></filter>
+				<mag-filter><use>texture[2]/mag-filter</use></mag-filter>
+				<wrap-s><use>texture[2]/wrap-s</use></wrap-s>
+				<wrap-t><use>texture[2]/wrap-t</use></wrap-t>
+			</texture-unit>
+			<texture-unit>
+				<unit>3</unit>
+				<type><use>texture[3]/type</use></type>
+				<image><use>texture[3]/image</use></image>
+				<filter><use>texture[3]/filter</use></filter>
+				<mag-filter><use>texture[3]/mag-filter</use></mag-filter>
+				<wrap-s><use>texture[3]/wrap-s</use></wrap-s>
+				<wrap-t><use>texture[3]/wrap-t</use></wrap-t>
+			</texture-unit>
+			<blend><use>blend</use></blend>
+			<rendering-hint>transparent</rendering-hint>
+			<cull-face><use>cull-face</use></cull-face>
+			<program>
+				<!--<vertex-shader>Shaders/HDR/model_pbr_transparent.vert</vertex-shader>
+				<fragment-shader>Shaders/HDR/model_pbr_transparent.frag</fragment-shader>-->
+				<fragment-shader>Aircraft/c310-family/Shaders/prop-blur.frag</fragment-shader>
+				<vertex-shader>Aircraft/c310-family/Shaders/prop-blur.vert</vertex-shader>
+				<vertex-shader>Shaders/HDR/logarithmic_depth.glsl</vertex-shader>
+				<vertex-shader>Shaders/HDR/aerial_perspective.glsl</vertex-shader>
+				<vertex-shader>Shaders/HDR/mvr.vert</vertex-shader>
+				<fragment-shader>Shaders/HDR/normalmap.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/color.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/math.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/logarithmic_depth.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/shading_transparent.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/surface.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/ibl.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/shadows.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/sun.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/aerial_perspective.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/atmos_spectral.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/clustered.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/exposure.glsl</fragment-shader>
+				<fragment-shader>Shaders/HDR/mvr.frag</fragment-shader>
+			</program>
+			<uniform>
+				<name>base_color_tex</name>
+				<type>sampler-2d</type>
+				<value type="int">0</value>
+			</uniform>
+			<uniform>
+				<name>normal_tex</name>
+				<type>sampler-2d</type>
+				<value type="int">1</value>
+			</uniform>
+			<uniform>
+				<name>orm_tex</name>
+				<type>sampler-2d</type>
+				<value type="int">2</value>
+			</uniform>
+			<uniform>
+				<name>emissive_tex</name>
+				<type>sampler-2d</type>
+				<value type="int">3</value>
+			</uniform>
+			<uniform>
+				<name>base_color_factor</name>
+				<type>float-vec4</type>
+				<value>1 1 1 1</value>
+			</uniform>
+			<uniform>
+				<name>gradient_texture</name>
+				<type>sampler-2d</type>
+				<value type="int">0</value>
+			</uniform>
+			<uniform>
+				<name>normal_tex</name>
+				<type>sampler-2d</type>
+				<value type="int">1</value>
+			</uniform>
+			<uniform>
+				<name>metallic_factor</name>
+				<type>float</type>
+				<value><use>metallic-factor</use></value>
+			</uniform>
+			<uniform>
+				<name>roughness_factor</name>
+				<type>float</type>
+				<value><use>roughness-factor</use></value>
+			</uniform>
+			<!-- shadows.glsl -->
+			<uniform>
+				<name>shadow_tex</name>
+				<type>sampler-2d-shadow</type>
+				<value type="int">10</value>
+			</uniform>
+			<uniform>
+				<name>debug_shadow_cascades</name>
+				<type>bool</type>
+				<value><use>show-shadow-cascades</use></value>
+			</uniform>
+			<uniform>
+				<name>normal_bias</name>
+				<type>float</type>
+				<value><use>normal-bias</use></value>
+			</uniform>
+			<uniform>
+				<name>sss_enabled</name>
+				<type>bool</type>
+				<value><use>sss-enabled</use></value>
+			</uniform>
+			<uniform>
+				<name>sss_step_count</name>
+				<type>int</type>
+				<value><use>sss-step-count</use></value>
+			</uniform>
+			<uniform>
+				<name>sss_max_distance</name>
+				<type>float</type>
+				<value><use>sss-max-distance</use></value>
+			</uniform>
+			<uniform>
+				<name>sss_depth_bias</name>
+				<type>float</type>
+				<value><use>sss-depth-bias</use></value>
+			</uniform>
+			<!-- ibl.glsl -->
+			<uniform>
+				<name>dfg_tex</name>
+				<type>sampler-2d</type>
+				<value type="int">8</value>
+			</uniform>
+			<uniform>
+				<name>prefiltered_envmap_tex</name>
+				<type>sampler-cube</type>
+				<value type="int">9</value>
+			</uniform>
+			<!-- aerial_perspective.glsl -->
+			<uniform>
+				<name>aerial_perspective_tex</name>
+				<type>sampler-3d</type>
+				<value type="int">11</value>
+			</uniform>
+			<!-- sun.glsl -->
+			<uniform>
+				<name>transmittance_tex</name>
+				<type>sampler-2d</type>
+				<value type="int">12</value>
+			</uniform>
+			<!-- exposure.glsl -->
+			<uniform>
+				<name>lum_tex</name>
+				<type>sampler-2d</type>
+				<value type="int">14</value>
+			</uniform>
+			<uniform>
+				<name>exposure_compensation</name>
+				<type>float</type>
+				<value><use>exposure-compensation</use></value>
+			</uniform>
+
+			<uniform>
+				<name>diameter</name>
+				<type>float</type>
+				<value><use>diameter-m</use></value>
+			</uniform>
+			<uniform>
+				<name>num_blades</name>
+				<type>int</type>
+				<value><use>num-blades</use></value>
+			</uniform>
+			<uniform>
+				<name>rpm</name>
+				<type>float</type>
+				<value><use>rpm</use></value>
+			</uniform>
+			<uniform>
+				<name>pitch</name>
+				<type>float</type>
+				<value><use>pitch</use></value>
+			</uniform>
+			<uniform>
+				<name>blade_width_0</name>
+				<type>float</type>
+				<value><use>blade-width[0]</use></value>
+			</uniform>
+			<uniform>
+				<name>blade_width_1</name>
+				<type>float</type>
+				<value><use>blade-width[1]</use></value>
+			</uniform>
+			<uniform>
+				<name>blade_width_2</name>
+				<type>float</type>
+				<value><use>blade-width[2]</use></value>
+			</uniform>
+			<uniform>
+				<name>blade_width_3</name>
+				<type>float</type>
+				<value><use>blade-width[3]</use></value>
+			</uniform>
+			<uniform>
+				<name>blur_onset_rpm</name>
+				<type>float</type>
+				<value><use>blur-onset-rpm</use></value>
+			</uniform>
+			<uniform>
+				<name>blur_full_rpm</name>
+				<type>float</type>
+				<value><use>blur-full-rpm</use></value>
+			</uniform>
 		</pass>
 	</technique>
 </PropertyList>
